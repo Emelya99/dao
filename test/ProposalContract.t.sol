@@ -17,7 +17,7 @@ contract ProposalContractTest is DAOBase {
 
         _createNewProposal(alice, "My first Proposal");
 
-        proposal = _getProposal(proposalCount + 1);
+        proposal = _getProposal(1);
     }
 
     // Should vote "for" and emit event
@@ -48,9 +48,9 @@ contract ProposalContractTest is DAOBase {
 
     // Should revert if trying to vote after deadline
     function test_VoteDeadlineEndedRevert() public {
-        vm.warp(proposal.deadline() + 1);
+        _skipDeadline(proposal);
 
-        vm.expectRevert(bytes("DAO: voting period has ended"));
+        vm.expectRevert(bytes("DAO Proposal: voting period has ended"));
         _vote(alice, proposal, true);
     }
 
@@ -58,13 +58,68 @@ contract ProposalContractTest is DAOBase {
     function test_VoteTwiceRevert() public {
         _vote(bob, proposal, false);
 
-        vm.expectRevert(bytes("DAO: voter has already voted on this proposal"));
+        vm.expectRevert(bytes("DAO Proposal: voter has already voted on this proposal"));
         _vote(bob, proposal, true);
     }
 
     // Should revert if user doesn't have enough tokens
     function test_VoteNotEnoughBalanceRevert() public {
-        vm.expectRevert(bytes("DAO: insufficient tokens to vote"));
+        vm.expectRevert(bytes("DAO Proposal: insufficient tokens to vote"));
         _vote(charlie, proposal, false);
+    }
+
+    // Should exucute a proposal, success
+    function test_ExecuteProposal() public {
+        _vote(bob, proposal, true);
+
+        _skipDeadline(proposal);
+
+        dao.executeProposal(1);
+
+        assertEq(true, proposal.executed());
+    }
+
+    // Should revert if not dao call the function
+    function test_ExecuteNotDaoCall_Revert() public {
+        _vote(bob, proposal, true);
+
+        _skipDeadline(proposal);
+
+        vm.expectRevert(bytes("DAO Proposal: Only DAO can execute"));
+        proposal.execute();
+    }
+
+    // Should revert if proposal has already executed
+    function test_ProposalAlrearyExecuted_Revert() public {
+        test_ExecuteProposal();
+
+        vm.expectRevert(bytes("DAO Proposal: proposal has already been executed"));
+        dao.executeProposal(1);
+    }
+
+    // Should revert if voting period is still active
+    function test_ProposalActiveVoting_Revert() public {
+        _vote(bob, proposal, true);
+
+        vm.expectRevert(bytes("DAO Proposal: voting period is still active"));
+        dao.executeProposal(1);
+    }
+
+    // Should revert if total votes are zero
+    function test_ProposalWithoutVotes_Revert() public {
+        _skipDeadline(proposal);
+
+        vm.expectRevert(bytes("DAO Proposal: no votes cast for this proposal"));
+        dao.executeProposal(1);
+    }
+
+    // Should revert if proposal did not reach quorum
+    function test_ProposalQuorumFailure_Revert() public {
+        _vote(bob, proposal, false);
+
+        _skipDeadline(proposal);
+
+        vm.expectRevert(bytes("DAO Proposal: proposal did not reach quorum"));
+        dao.executeProposal(1);
     }
 }

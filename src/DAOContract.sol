@@ -20,7 +20,7 @@ contract DAOContract is Ownable {
     constructor(address _governanceToken, uint256 _minTokensToCreateProposal, uint256 _votingPeriod)
         Ownable(msg.sender)
     {
-        require(_governanceToken != address(0), "Token address cannot be zero");
+        require(_governanceToken != address(0), "DAO: Token address cannot be zero");
         require(_votingPeriod > 0, "DAO: voting period must be greater than ");
 
         GOVERNANCE_TOKEN = IERC20(_governanceToken);

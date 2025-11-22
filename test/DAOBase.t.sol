@@ -43,4 +43,8 @@ contract DAOBase is Test {
         vm.prank(_voter);
         _proposal.vote(_support);
     }
+
+    function _skipDeadline(ProposalContract _proposal) internal {
+        vm.warp(_proposal.deadline() + 1);
+    }
 }

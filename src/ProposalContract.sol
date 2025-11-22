@@ -23,7 +23,7 @@ contract ProposalContract {
     event Voted(uint256 id, address voter, bool support, uint256 amount);
 
     modifier onlyDAO() {
-        require(msg.sender == dao, "Only DAO can execute");
+        require(msg.sender == dao, "DAO Proposal: Only DAO can execute");
         _;
     }
 
@@ -70,12 +70,12 @@ contract ProposalContract {
     }
 
     function checkVote() public view {
-        require(block.timestamp < deadline, "DAO: voting period has ended");
+        require(block.timestamp < deadline, "DAO Proposal: voting period has ended");
 
-        require(!hasVoted[msg.sender], "DAO: voter has already voted on this proposal");
+        require(!hasVoted[msg.sender], "DAO Proposal: voter has already voted on this proposal");
 
         uint256 voterBalance = governanceToken.balanceOf(msg.sender);
-        require(voterBalance > 0, "DAO: insufficient tokens to vote");
+        require(voterBalance > 0, "DAO Proposal: insufficient tokens to vote");
     }
 
     // Execute logic
@@ -84,13 +84,13 @@ contract ProposalContract {
     }
 
     function checkExecute() public view {
-        require(!executed, "DAO: proposal has already been executed");
-        require(block.timestamp >= deadline, "DAO: voting period is still active");
+        require(!executed, "DAO Proposal: proposal has already been executed");
+        require(block.timestamp >= deadline, "DAO Proposal: voting period is still active");
 
         uint256 totalVotes = voteCountFor + voteCountAgainst;
-        require(totalVotes > 0, "DAO: no votes cast for this proposal");
+        require(totalVotes > 0, "DAO Proposal: no votes cast for this proposal");
 
         uint256 quorum = totalVotes * QUORUM_PERCENTAGE / 100;
-        require(voteCountFor > quorum, "DAO: proposal did not reach quorum");
+        require(voteCountFor > quorum, "DAO Proposal: proposal did not reach quorum");
     }
 }
