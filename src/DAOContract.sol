@@ -53,6 +53,16 @@ contract DAOContract is Ownable {
         emit ProposalExecuted(_proposalId, msg.sender);
     }
 
+    function updateMinTokensToCreateProposal(uint256 _minTokensToCreateProposal) external onlyOwner {
+        require(_minTokensToCreateProposal > 0, "DAO: minTokensToCreateProposal must be greater than 0");
+        minTokensToCreateProposal = _minTokensToCreateProposal;
+    }
+
+    function updateVotingPeriod(uint256 _votingPeriod) external onlyOwner {
+        require(_votingPeriod > 0, "DAO: voting period must be greater than 0");
+        votingPeriod = _votingPeriod;
+    }
+
     function getProposal(uint256 _id) public view returns (address) {
         return proposals[_id];
     }

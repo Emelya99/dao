@@ -44,4 +44,28 @@ contract DAOContractTest is DAOBase {
         vm.expectRevert(bytes("DAO: You don't have enough tokens to create a proposal"));
         _createNewProposal(bob, "My first Proposal");
     }
+
+    // Should update minTokensToCreateProposal
+    function test_UpdateMinTokensToCreateProposal() public {
+        dao.updateMinTokensToCreateProposal(100);
+        assertEq(100, dao.minTokensToCreateProposal());
+    }
+
+    // Should revert if minTokensToCreateProposal is zero
+    function test_UpdateMinTokensToCreateProposalZero_Revert() public {
+        vm.expectRevert(bytes("DAO: minTokensToCreateProposal must be greater than 0"));
+        dao.updateMinTokensToCreateProposal(0);
+    }
+
+    // Should update voting period
+    function test_UpdateVotingPeriod() public {
+        dao.updateVotingPeriod(10 minutes);
+        assertEq(10 minutes, dao.votingPeriod());
+    }
+
+    // Should revert if voting period is zero
+    function test_UpdateVotingPeriodZero_Revert() public {
+        vm.expectRevert(bytes("DAO: voting period must be greater than 0"));
+        dao.updateVotingPeriod(0);
+    }
 }
