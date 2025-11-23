@@ -1,23 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import {console} from "forge-std/console.sol";
 import {ProposalContract} from "../src/ProposalContract.sol";
 import {DAOBase} from "./DAOBase.t.sol";
 
 contract DAOContractTest is DAOBase {
     event ProposalCreated(uint256 id, address creator, string description);
-    event ProposalExecuted(uint256 id, address executor);
 
-    // Create Proposel, success case
-    function test_CreateProposal() public {
+    // Should create Generic Proposel, success case
+    function test_CreateGenericProposal() public {
         uint256 startTimestamp = block.timestamp;
         uint256 proposalCount = dao.proposalCount();
 
-        vm.expectEmit(true, true, true, true);
-        emit ProposalCreated(proposalCount + 1, alice, "My first Proposal");
+        _emitCreatedProposal();
 
-        _createNewProposal(alice, "My first Proposal");
+        _createGenericProposal(alice, "My first Proposal");
 
         // Get proposal data from proposal address
         ProposalContract proposal = _getProposal(proposalCount + 1);
@@ -31,41 +28,68 @@ contract DAOContractTest is DAOBase {
         assertEq(startTimestamp + VOTING_PERIOD, proposal.deadline());
         assertEq(address(token), address(proposal.governanceToken()));
         assertEq(address(dao), address(proposal.dao()));
+        assertEq(uint256(ProposalContract.ProposalType.Generic), uint256(proposal.proposalType()));
+        assertEq(0, proposal.configValue());
     }
 
-    // Create Proposal with empty description
-    function test_CreateProposalWithEmptyDescriptionRevert() public {
-        vm.expectRevert(bytes("DAO: description cannot be empty"));
-        _createNewProposal(alice, "");
+    // Should create UpdateVotingPeriod Proposel, success case
+    function test_CreateUpdateVotingPeriodProposal() public {
+        _emitCreatedProposal();
+
+        _createUpdateVotingPeriodProposal(alice, "My first Proposal", 2 days);
+
+        ProposalContract proposal = _getProposal(1);
+
+        assertEq(uint256(ProposalContract.ProposalType.UpdateVotingPeriod), uint256(proposal.proposalType()));
+        assertEq(2 days, proposal.configValue());
     }
 
-    // Create Proposal when not enough balance
-    function test_CreateProposalNotEnoughBalanceRevert() public {
-        vm.expectRevert(bytes("DAO: You don't have enough tokens to create a proposal"));
-        _createNewProposal(bob, "My first Proposal");
-    }
-
-    // Should update minTokensToCreateProposal
-    function test_UpdateMinTokensToCreateProposal() public {
-        dao.updateMinTokensToCreateProposal(100);
-        assertEq(100, dao.minTokensToCreateProposal());
-    }
-
-    // Should revert if minTokensToCreateProposal is zero
-    function test_UpdateMinTokensToCreateProposalZero_Revert() public {
-        vm.expectRevert(bytes("DAO: minTokensToCreateProposal must be greater than 0"));
-        dao.updateMinTokensToCreateProposal(0);
-    }
-
-    // Should update voting period
-    function test_UpdateVotingPeriod() public {
-        dao.updateVotingPeriod(10 minutes);
-        assertEq(10 minutes, dao.votingPeriod());
-    }
-
-    // Should revert if voting period is zero
-    function test_UpdateVotingPeriodZero_Revert() public {
+    // Should revert if new voting period is zero
+    function test_CreateUpdateVotingPeriodProposalWithZeroVotingPeriod_Revert() public {
         vm.expectRevert(bytes("DAO: voting period must be greater than 0"));
-        dao.updateVotingPeriod(0);
+        _createUpdateVotingPeriodProposal(alice, "My first Proposal", 0);
+    }
+
+    // Create UpdateMinTokensToCreateProposal Proposel, success case
+    function test_CreateUpdateMinTokensToCreateProposal() public {
+        _emitCreatedProposal();
+
+        _createUpdateMinTokensToCreateProposal(alice, "My first Proposal", 2000);
+
+        ProposalContract proposal = _getProposal(1);
+
+        assertEq(
+            uint256(ProposalContract.ProposalType.UpdateMinTokensToCreateProposal), uint256(proposal.proposalType())
+        );
+        assertEq(2000, proposal.configValue());
+    }
+
+    // Should revert if new min tokens is zero
+    function test_CreateUpdateMinTokensToCreateProposalWithZeroMinTokens_Revert() public {
+        vm.expectRevert(bytes("DAO: minTokensToCreateProposal must be greater than 0"));
+        _createUpdateMinTokensToCreateProposal(alice, "My first Proposal", 0);
+    }
+
+    // Should revert if description is empty
+    function test_CreateProposalWithEmptyDescription_Revert() public {
+        vm.expectRevert(bytes("DAO: description cannot be empty"));
+        _createGenericProposal(alice, "");
+    }
+
+    // Should revert if not enough balance
+    function test_CreateProposalNotEnoughBalance_Revert() public {
+        vm.expectRevert(bytes("DAO: You don't have enough tokens to create a proposal"));
+        _createGenericProposal(bob, "My first Proposal");
+    }
+
+    // Should revert if try to execute proposal that is not created
+    function test_ExecuteProposalNotCreated_Revert() public {
+        vm.expectRevert(bytes("DAO: Proposal does not exist"));
+        dao.executeProposal(1);
+    }
+
+    function _emitCreatedProposal() public {
+        vm.expectEmit(true, true, true, true);
+        emit ProposalCreated(1, alice, "My first Proposal");
     }
 }

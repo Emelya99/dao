@@ -19,6 +19,7 @@ contract DAOBase is Test {
     address internal alice = vm.addr(1);
     address internal bob = vm.addr(2);
     address internal charlie = vm.addr(3);
+    address internal dave = vm.addr(4);
 
     function setUp() public virtual {
         token = new AYEMToken();
@@ -26,11 +27,30 @@ contract DAOBase is Test {
 
         token.transfer(alice, 1000);
         token.transfer(bob, 500);
+        token.transfer(dave, 5000);
     }
 
-    function _createNewProposal(address _author, string memory _descriptopn) internal {
+    function _createGenericProposal(address _author, string memory _description) internal {
         vm.startPrank(_author);
-        dao.createProposal(_descriptopn);
+        dao.createGenericProposal(_description);
+        vm.stopPrank();
+    }
+
+    function _createUpdateVotingPeriodProposal(address _author, string memory _description, uint256 _votingPeriod)
+        internal
+    {
+        vm.startPrank(_author);
+        dao.createUpdateVotingPeriodProposal(_description, _votingPeriod);
+        vm.stopPrank();
+    }
+
+    function _createUpdateMinTokensToCreateProposal(
+        address _author,
+        string memory _description,
+        uint256 _minTokensToCreateProposal
+    ) internal {
+        vm.startPrank(_author);
+        dao.createUpdateMinTokensToCreateProposal(_description, _minTokensToCreateProposal);
         vm.stopPrank();
     }
 

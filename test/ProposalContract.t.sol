@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
-import {console} from "forge-std/console.sol";
 import {ProposalContract} from "../src/ProposalContract.sol";
 import {DAOBase} from "./DAOBase.t.sol";
 
@@ -13,9 +12,7 @@ contract ProposalContractTest is DAOBase {
     function setUp() public override {
         super.setUp();
 
-        uint256 proposalCount = dao.proposalCount();
-
-        _createNewProposal(alice, "My first Proposal");
+        _createGenericProposal(alice, "My first Proposal");
 
         proposal = _getProposal(1);
     }

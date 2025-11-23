@@ -4,6 +4,12 @@ pragma solidity ^0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ProposalContract {
+    enum ProposalType {
+        Generic,
+        UpdateVotingPeriod,
+        UpdateMinTokensToCreateProposal
+    }
+
     uint256 public id;
     address public author;
     string public description;
@@ -17,6 +23,9 @@ contract ProposalContract {
 
     IERC20 public governanceToken;
     address public dao;
+
+    ProposalType public proposalType;
+    uint256 public configValue;
 
     mapping(address => bool) public hasVoted; // voter address => voted or not
 
@@ -44,7 +53,9 @@ contract ProposalContract {
         string memory _description,
         uint256 _deadline,
         address _token,
-        address _dao
+        address _dao,
+        ProposalType _proposalType,
+        uint256 _configValue
     ) {
         id = _id;
         author = _author;
@@ -52,6 +63,9 @@ contract ProposalContract {
         deadline = _deadline;
         governanceToken = IERC20(_token);
         dao = _dao;
+
+        proposalType = _proposalType;
+        configValue = _configValue;
     }
 
     // Vote logic
