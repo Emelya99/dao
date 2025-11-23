@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.26;
 
+import {console} from "forge-std/console.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ProposalContract} from "./ProposalContract.sol";
 
 contract DAOContract is Ownable {
     IERC20 public immutable GOVERNANCE_TOKEN;
+    uint8 public immutable tokenDecimals;
 
-    uint256 public proposalCount = 0;
-    uint256 public minTokensToCreateProposal = 100;
-    uint256 public votingPeriod = 3 days;
+    uint256 public proposalCount;
+    uint256 public minTokensToCreateProposal;
+    uint256 public votingPeriod;
 
     mapping(uint256 => address) public proposals; // key - ID | value - ProposalContract address
 
@@ -21,10 +24,13 @@ contract DAOContract is Ownable {
         Ownable(msg.sender)
     {
         require(_governanceToken != address(0), "DAO: Token address cannot be zero");
-        require(_votingPeriod > 0, "DAO: voting period must be greater than ");
+        require(_minTokensToCreateProposal > 0, "DAO: minTokensToCreateProposal must be greater than 0");
+        require(_votingPeriod > 0, "DAO: voting period must be greater than 0");
 
         GOVERNANCE_TOKEN = IERC20(_governanceToken);
-        minTokensToCreateProposal = _minTokensToCreateProposal;
+        tokenDecimals = IERC20Metadata(_governanceToken).decimals();
+
+        minTokensToCreateProposal = _minTokensToCreateProposal * (10 ** uint256(tokenDecimals));
         votingPeriod = _votingPeriod;
     }
 
@@ -99,7 +105,7 @@ contract DAOContract is Ownable {
         if (pType == ProposalContract.ProposalType.UpdateVotingPeriod) {
             votingPeriod = value;
         } else if (pType == ProposalContract.ProposalType.UpdateMinTokensToCreateProposal) {
-            minTokensToCreateProposal = value;
+            minTokensToCreateProposal = value * (10 ** uint256(tokenDecimals));
         }
     }
 }

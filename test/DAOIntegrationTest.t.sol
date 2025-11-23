@@ -96,7 +96,7 @@ contract DAOIntegrationTest is DAOBase {
 
         dao.executeProposal(1);
 
-        assertEq(2500, dao.minTokensToCreateProposal());
+        assertEq(_toWei(2500), dao.minTokensToCreateProposal());
 
         vm.expectRevert(bytes("DAO: You don't have enough tokens to create a proposal"));
         _createGenericProposal(alice, "My second Proposal");

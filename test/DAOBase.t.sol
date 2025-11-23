@@ -25,9 +25,9 @@ contract DAOBase is Test {
         token = new AYEMToken();
         dao = new DAOContract(address(token), MIN_TOKENS_TO_CREATE, VOTING_PERIOD);
 
-        token.transfer(alice, 1000);
-        token.transfer(bob, 500);
-        token.transfer(dave, 5000);
+        token.transfer(alice, _toWei(1000));
+        token.transfer(bob, _toWei(500));
+        token.transfer(dave, _toWei(5000));
     }
 
     function _createGenericProposal(address _author, string memory _description) internal {
@@ -66,5 +66,9 @@ contract DAOBase is Test {
 
     function _skipDeadline(ProposalContract _proposal) internal {
         vm.warp(_proposal.deadline() + 1);
+    }
+
+    function _toWei(uint256 _amount) internal returns (uint256) {
+        return _amount * 10 ** uint256(token.decimals());
     }
 }
