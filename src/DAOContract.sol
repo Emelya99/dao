@@ -18,6 +18,8 @@ contract DAOContract is Ownable {
 
     event ProposalCreated(uint256 id, address creator, string description);
     event ProposalExecuted(uint256 id, address executor);
+    event VotingPeriodUpdated(uint256 oldValue, uint256 newValue);
+    event MinTokensToCreateProposalUpdated(uint256 oldValue, uint256 newValue);
 
     constructor(address _governanceToken, uint256 _minTokensToCreateProposal, uint256 _votingPeriod)
         Ownable(msg.sender)
@@ -102,9 +104,12 @@ contract DAOContract is Ownable {
         uint256 value = _proposal.configValue();
 
         if (pType == ProposalContract.ProposalType.UpdateVotingPeriod) {
+            emit VotingPeriodUpdated(votingPeriod, value);
             votingPeriod = value;
         } else if (pType == ProposalContract.ProposalType.UpdateMinTokensToCreateProposal) {
-            minTokensToCreateProposal = value * (10 ** uint256(tokenDecimals));
+            uint256 newMinTokens = value * (10 ** uint256(tokenDecimals));
+            emit MinTokensToCreateProposalUpdated(minTokensToCreateProposal, newMinTokens);
+            minTokensToCreateProposal = newMinTokens;
         }
     }
 }

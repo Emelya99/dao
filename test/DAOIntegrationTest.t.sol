@@ -6,6 +6,8 @@ import {DAOBase} from "./DAOBase.t.sol";
 
 contract DAOIntegrationTest is DAOBase {
     event ProposalExecuted(uint256 id, address executor);
+    event VotingPeriodUpdated(uint256 oldValue, uint256 newValue);
+    event MinTokensToCreateProposalUpdated(uint256 oldValue, uint256 newValue);
 
     // Should Create Three Proposals in a row
     function test_CreateThreeProposals() public {
@@ -69,6 +71,9 @@ contract DAOIntegrationTest is DAOBase {
 
         _skipDeadline(proposalAfter);
 
+        vm.expectEmit(true, true, true, true);
+        emit VotingPeriodUpdated(VOTING_PERIOD, 10 days);
+
         dao.executeProposal(1);
 
         assertEq(10 days, dao.votingPeriod());
@@ -93,6 +98,9 @@ contract DAOIntegrationTest is DAOBase {
         _vote(alice, proposal, true);
 
         _skipDeadline(proposal);
+
+        vm.expectEmit(true, true, true, true);
+        emit MinTokensToCreateProposalUpdated(_toWei(MIN_TOKENS_TO_CREATE), _toWei(2500));
 
         dao.executeProposal(1);
 
