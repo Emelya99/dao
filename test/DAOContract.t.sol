@@ -5,7 +5,7 @@ import {ProposalContract} from "../src/ProposalContract.sol";
 import {DAOBase} from "./DAOBase.t.sol";
 
 contract DAOContractTest is DAOBase {
-    event ProposalCreated(uint256 id, address creator, string description);
+    event ProposalCreated(uint256 id, address creator, string description, address proposalAddress);
 
     // Should create Generic Proposel, success case
     function test_CreateGenericProposal() public {
@@ -89,7 +89,7 @@ contract DAOContractTest is DAOBase {
     }
 
     function _emitCreatedProposal() public {
-        vm.expectEmit(true, true, true, true);
-        emit ProposalCreated(1, alice, "My first Proposal");
+        vm.expectEmit(true, true, true, false);
+        emit ProposalCreated(1, alice, "My first Proposal", address(this));
     }
 }

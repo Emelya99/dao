@@ -16,7 +16,7 @@ contract DAOContract is Ownable {
 
     mapping(uint256 => address) public proposals; // key - ID | value - ProposalContract address
 
-    event ProposalCreated(uint256 id, address creator, string description);
+    event ProposalCreated(uint256 id, address creator, string description, address proposalAddress);
     event ProposalExecuted(uint256 id, address executor);
     event VotingPeriodUpdated(uint256 oldValue, uint256 newValue);
     event MinTokensToCreateProposalUpdated(uint256 oldValue, uint256 newValue);
@@ -96,7 +96,7 @@ contract DAOContract is Ownable {
 
         proposals[proposalCount] = address(proposal);
 
-        emit ProposalCreated(proposalCount, msg.sender, _description);
+        emit ProposalCreated(proposalCount, msg.sender, _description, address(proposal));
     }
 
     function _applyProposal(ProposalContract _proposal) internal {
