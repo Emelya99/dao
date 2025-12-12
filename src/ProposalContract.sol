@@ -4,12 +4,6 @@ pragma solidity ^0.8.26;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ProposalContract {
-    enum ProposalType {
-        Generic,
-        UpdateVotingPeriod,
-        UpdateMinTokensToCreateProposal
-    }
-
     uint256 public id;
     address public author;
     string public description;
@@ -19,13 +13,15 @@ contract ProposalContract {
     uint256 public voteCountAgainst;
     uint256 public deadline;
 
+    // Proposal execution
+    address public target;
+    uint256 public value;
+    bytes public data;
+
     uint256 public constant QUORUM_PERCENTAGE = 50;
 
     IERC20 public governanceToken;
     address public dao;
-
-    ProposalType public proposalType;
-    uint256 public configValue;
 
     mapping(address => bool) public hasVoted; // voter address => voted or not
 
@@ -52,20 +48,21 @@ contract ProposalContract {
         address _author,
         string memory _description,
         uint256 _deadline,
+        address _target,
+        uint256 _value,
+        bytes memory _data,
         address _token,
-        address _dao,
-        ProposalType _proposalType,
-        uint256 _configValue
+        address _dao
     ) {
         id = _id;
         author = _author;
         description = _description;
         deadline = _deadline;
+        target = _target;
+        value = _value;
+        data = _data;
         governanceToken = IERC20(_token);
         dao = _dao;
-
-        proposalType = _proposalType;
-        configValue = _configValue;
     }
 
     // Vote logic
@@ -93,7 +90,7 @@ contract ProposalContract {
     }
 
     // Execute logic
-    function execute() external onlyDAO canExecute {
+    function markExecuted() external onlyDAO canExecute {
         executed = true;
     }
 

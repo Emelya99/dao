@@ -16,10 +16,8 @@ contract DAOContract is Ownable {
 
     mapping(uint256 => address) public proposals; // key - ID | value - ProposalContract address
 
-    event ProposalCreated(uint256 id, address indexed creator, string description, address proposalAddress);
+    event ProposalCreated(uint256 indexed id, address indexed creator, string description, address proposalAddress);
     event ProposalExecuted(uint256 id, address executor);
-    event VotingPeriodUpdated(uint256 oldValue, uint256 newValue);
-    event MinTokensToCreateProposalUpdated(uint256 oldValue, uint256 newValue);
 
     constructor(address _governanceToken, uint256 _minTokensToCreateProposal, uint256 _votingPeriod)
         Ownable(msg.sender)
@@ -35,50 +33,18 @@ contract DAOContract is Ownable {
         votingPeriod = _votingPeriod;
     }
 
-    function createGenericProposal(string memory _description) external {
-        _createProposal(_description, ProposalContract.ProposalType.Generic, 0);
-    }
-
-    function createUpdateVotingPeriodProposal(string memory _description, uint256 _votingPeriod) external {
-        require(_votingPeriod > 0, "DAO: voting period must be greater than 0");
-        _createProposal(_description, ProposalContract.ProposalType.UpdateVotingPeriod, _votingPeriod);
-    }
-
-    function createUpdateMinTokensToCreateProposal(string memory _description, uint256 _minTokensToCreateProposal)
-        external
-    {
-        require(_minTokensToCreateProposal > 0, "DAO: minTokensToCreateProposal must be greater than 0");
-        _createProposal(
-            _description, ProposalContract.ProposalType.UpdateMinTokensToCreateProposal, _minTokensToCreateProposal
-        );
-    }
-
-    function executeProposal(uint256 _proposalId) external {
-        require(proposals[_proposalId] != address(0), "DAO: Proposal does not exist");
-
-        ProposalContract proposal = ProposalContract(proposals[_proposalId]);
-
-        proposal.execute();
-
-        _applyProposal(proposal);
-
-        emit ProposalExecuted(_proposalId, msg.sender);
-    }
-
-    function getProposal(uint256 _id) public view returns (address) {
-        return proposals[_id];
-    }
-
-    function _createProposal(
+    function createProposal(
         string memory _description,
-        ProposalContract.ProposalType _proposalType,
-        uint256 _configValue
-    ) internal {
+        address _target,
+        uint256 _value,
+        bytes memory _data
+    ) external returns (uint256) {
         require(bytes(_description).length > 0, "DAO: description cannot be empty");
         require(
             GOVERNANCE_TOKEN.balanceOf(msg.sender) >= minTokensToCreateProposal,
             "DAO: You don't have enough tokens to create a proposal"
         );
+        require(_target != address(0), "DAO: invalid target");
 
         proposalCount++;
         uint256 deadline = block.timestamp + votingPeriod;
@@ -88,28 +54,38 @@ contract DAOContract is Ownable {
             msg.sender,
             _description,
             deadline,
+            _target,
+            _value,
+            _data,
             address(GOVERNANCE_TOKEN),
-            address(this),
-            _proposalType,
-            _configValue
+            address(this)
         );
 
         proposals[proposalCount] = address(proposal);
 
         emit ProposalCreated(proposalCount, msg.sender, _description, address(proposal));
+
+        return proposalCount;
     }
 
-    function _applyProposal(ProposalContract _proposal) internal {
-        ProposalContract.ProposalType pType = _proposal.proposalType();
-        uint256 value = _proposal.configValue();
+    function executeProposal(uint256 _proposalId) external {
+        require(proposals[_proposalId] != address(0), "DAO: Proposal does not exist");
+        
+        address proposalAddr = proposals[_proposalId];
+        ProposalContract proposal = ProposalContract(proposalAddr);
 
-        if (pType == ProposalContract.ProposalType.UpdateVotingPeriod) {
-            emit VotingPeriodUpdated(votingPeriod, value);
-            votingPeriod = value;
-        } else if (pType == ProposalContract.ProposalType.UpdateMinTokensToCreateProposal) {
-            uint256 newMinTokens = value * (10 ** uint256(tokenDecimals));
-            emit MinTokensToCreateProposalUpdated(minTokensToCreateProposal, newMinTokens);
-            minTokensToCreateProposal = newMinTokens;
-        }
+        proposal.markExecuted();
+
+        (bool ok, ) = proposal.target().call{ value: proposal.value() }(
+            proposal.data()
+        );
+
+        require(ok, "DAO: execution failed");
+
+        emit ProposalExecuted(_proposalId, msg.sender);
+    }
+
+    function getProposal(uint256 _id) public view returns (address) {
+        return proposals[_id];
     }
 }
