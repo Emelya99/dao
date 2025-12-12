@@ -14,7 +14,7 @@ contract DeployDAOScript is Script {
         new DAOContract(
             token,
             1000, // min tokens to create proposal
-            5 minutes // <--- VOTING PERIOD = 5 minutes
+            30 minutes // <--- VOTING PERIOD = 30 minutes
         );
 
         vm.stopBroadcast();

@@ -1,12 +1,21 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
+// Compatible with OpenZeppelin Contracts ^5.5.0
 pragma solidity ^0.8.26;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AYEMToken is ERC20 {
-    constructor() ERC20("AYEM", "AYEM") {
-        uint256 supply = 64_000_000 * 10 ** uint256(decimals());
-        _mint(msg.sender, supply);
+contract AYEMToken is ERC20, ERC20Burnable, Ownable {
+    constructor(address recipient, address initialOwner)
+        ERC20("AYEM", "AYEM")
+        Ownable(initialOwner)
+    {
+        _mint(recipient, 64_000_000 * 10 ** decimals());
+    }
+
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
     }
 
     function decimals() public view virtual override returns (uint8) {
