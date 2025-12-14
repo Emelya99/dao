@@ -27,8 +27,8 @@ contract ProposalContract {
 
     event Voted(uint256 id, address voter, bool support, uint256 amount);
 
-    modifier onlyDAO() {
-        require(msg.sender == dao, "DAO Proposal: Only DAO can execute");
+    modifier onlyDao() {
+        _onlyDao();
         _;
     }
 
@@ -90,7 +90,7 @@ contract ProposalContract {
     }
 
     // Execute logic
-    function markExecuted() external onlyDAO canExecute {
+    function markExecuted() external onlyDao canExecute {
         executed = true;
     }
 
@@ -103,5 +103,10 @@ contract ProposalContract {
 
         uint256 quorum = totalVotes * QUORUM_PERCENTAGE / 100;
         require(voteCountFor > quorum, "DAO Proposal: proposal did not reach quorum");
+    }
+
+    // Internal functions
+    function _onlyDao() internal view {
+        require(msg.sender == dao, "DAO Proposal: Only DAO can execute");
     }
 }

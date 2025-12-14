@@ -5,10 +5,10 @@ import {ProposalContract} from "../src/ProposalContract.sol";
 import {DAOBase} from "./DAOBase.t.sol";
 
 contract DAOContractTest is DAOBase {
-    event ProposalCreated(uint256 id, address creator, string description, address proposalAddress);
+    event ProposalCreated(uint256 indexed id, address indexed creator, string description, address proposalAddress);
 
-    // Should create Generic Proposel, success case
-    function test_CreateGenericProposal() public {
+    // Should create a proposal, success case
+    function test_CreateProposal() public {
         uint256 startTimestamp = block.timestamp;
         uint256 proposalCount = dao.proposalCount();
 
@@ -26,48 +26,11 @@ contract DAOContractTest is DAOBase {
         assertEq(0, proposal.voteCountFor());
         assertEq(0, proposal.voteCountAgainst());
         assertEq(startTimestamp + VOTING_PERIOD, proposal.deadline());
+        assertEq(address(dao), proposal.target());
+        assertEq(0, proposal.value());
+        assertEq(abi.encodeWithSignature("noop()"), proposal.data());
         assertEq(address(token), address(proposal.governanceToken()));
         assertEq(address(dao), address(proposal.dao()));
-        assertEq(uint256(ProposalContract.ProposalType.Generic), uint256(proposal.proposalType()));
-        assertEq(0, proposal.configValue());
-    }
-
-    // Should create UpdateVotingPeriod Proposel, success case
-    function test_CreateUpdateVotingPeriodProposal() public {
-        _emitCreatedProposal();
-
-        _createUpdateVotingPeriodProposal(alice, "My first Proposal", 2 days);
-
-        ProposalContract proposal = _getProposal(1);
-
-        assertEq(uint256(ProposalContract.ProposalType.UpdateVotingPeriod), uint256(proposal.proposalType()));
-        assertEq(2 days, proposal.configValue());
-    }
-
-    // Should revert if new voting period is zero
-    function test_CreateUpdateVotingPeriodProposalWithZeroVotingPeriod_Revert() public {
-        vm.expectRevert(bytes("DAO: voting period must be greater than 0"));
-        _createUpdateVotingPeriodProposal(alice, "My first Proposal", 0);
-    }
-
-    // Create UpdateMinTokensToCreateProposal Proposel, success case
-    function test_CreateUpdateMinTokensToCreateProposal() public {
-        _emitCreatedProposal();
-
-        _createUpdateMinTokensToCreateProposal(alice, "My first Proposal", 2000);
-
-        ProposalContract proposal = _getProposal(1);
-
-        assertEq(
-            uint256(ProposalContract.ProposalType.UpdateMinTokensToCreateProposal), uint256(proposal.proposalType())
-        );
-        assertEq(2000, proposal.configValue());
-    }
-
-    // Should revert if new min tokens is zero
-    function test_CreateUpdateMinTokensToCreateProposalWithZeroMinTokens_Revert() public {
-        vm.expectRevert(bytes("DAO: minTokensToCreateProposal must be greater than 0"));
-        _createUpdateMinTokensToCreateProposal(alice, "My first Proposal", 0);
     }
 
     // Should revert if description is empty
@@ -86,6 +49,22 @@ contract DAOContractTest is DAOBase {
     function test_ExecuteProposalNotCreated_Revert() public {
         vm.expectRevert(bytes("DAO: Proposal does not exist"));
         dao.executeProposal(1);
+    }
+
+    // Should revert if new minTokens is invalid
+    function test_UpdateMinTokensToCreateProposalNotDao_Revert() public {
+        vm.startPrank(address(dao));
+        vm.expectRevert(bytes("DAO: invalid minTokens"));
+        dao.updateMinTokensToCreateProposal(0);
+        vm.stopPrank();
+    }
+
+    // Sholud revert if new votingPeriod is invalid
+    function test_UpdateVotingPeriodNotDao_Revert() public {
+        vm.startPrank(address(dao));
+        vm.expectRevert(bytes("DAO: invalid voting period"));
+        dao.updateVotingPeriod(0);
+        vm.stopPrank();
     }
 
     function _emitCreatedProposal() public {

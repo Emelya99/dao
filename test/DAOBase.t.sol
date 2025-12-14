@@ -22,35 +22,34 @@ contract DAOBase is Test {
     address internal dave = vm.addr(4);
 
     function setUp() public virtual {
-        token = new AYEMToken();
+        // deploy token and DAO
+        token = new AYEMToken(address(this), address(this));
         dao = new DAOContract(address(token), MIN_TOKENS_TO_CREATE, VOTING_PERIOD);
 
-        token.transfer(alice, _toWei(1000));
-        token.transfer(bob, _toWei(500));
-        token.transfer(dave, _toWei(5000));
+        // transfer token ownership to DAO
+        token.transferOwnership(address(dao));
+        dao.transferOwnership(address(dao));
+
+        require(token.transfer(alice, _toWei(1000)), "transfer failed");
+        require(token.transfer(bob, _toWei(500)), "transfer failed");
+        require(token.transfer(dave, _toWei(5000)), "transfer failed");
     }
 
     function _createGenericProposal(address _author, string memory _description) internal {
         vm.startPrank(_author);
-        dao.createGenericProposal(_description);
+        dao.createProposal(_description, address(dao), 0, abi.encodeWithSignature("noop()"));
         vm.stopPrank();
     }
 
-    function _createUpdateVotingPeriodProposal(address _author, string memory _description, uint256 _votingPeriod)
-        internal
-    {
-        vm.startPrank(_author);
-        dao.createUpdateVotingPeriodProposal(_description, _votingPeriod);
-        vm.stopPrank();
-    }
-
-    function _createUpdateMinTokensToCreateProposal(
+    function _createProposal(
         address _author,
         string memory _description,
-        uint256 _minTokensToCreateProposal
+        address _target,
+        uint256 _value,
+        bytes memory _data
     ) internal {
         vm.startPrank(_author);
-        dao.createUpdateMinTokensToCreateProposal(_description, _minTokensToCreateProposal);
+        dao.createProposal(_description, _target, _value, _data);
         vm.stopPrank();
     }
 
@@ -68,7 +67,7 @@ contract DAOBase is Test {
         vm.warp(_proposal.deadline() + 1);
     }
 
-    function _toWei(uint256 _amount) internal returns (uint256) {
+    function _toWei(uint256 _amount) internal view returns (uint256) {
         return _amount * 10 ** uint256(token.decimals());
     }
 }

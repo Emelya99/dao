@@ -83,7 +83,7 @@ contract ProposalContractTest is DAOBase {
         _skipDeadline(proposal);
 
         vm.expectRevert(bytes("DAO Proposal: Only DAO can execute"));
-        proposal.execute();
+        proposal.markExecuted();
     }
 
     // Should revert if proposal has already executed

@@ -7,10 +7,7 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AYEMToken is ERC20, ERC20Burnable, Ownable {
-    constructor(address recipient, address initialOwner)
-        ERC20("AYEM", "AYEM")
-        Ownable(initialOwner)
-    {
+    constructor(address recipient, address initialOwner) ERC20("AYEM", "AYEM") Ownable(initialOwner) {
         _mint(recipient, 64_000_000 * 10 ** decimals());
     }
 
